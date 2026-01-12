@@ -6,6 +6,11 @@ Use this template when dispatching a security reviewer subagent.
 
 **Dispatch after spec compliance review passes, before code quality review.**
 
+**PAL MCP Integration:**
+- PAL secaudit (Opus 4.5) - Deep security analysis
+- PAL thinkdeep (Opus 4.5) - For ambiguous findings
+- PAL consensus (Gemini 3.0 Pro + GPT 5.2 + Opus 4.5) - Verify CRITICAL issues
+
 ```
 Task tool (general-purpose):
   description: "Security review for Task N"
@@ -33,6 +38,64 @@ Task tool (general-purpose):
     ```bash
     git diff {BASE_SHA}..{HEAD_SHA}
     ```
+
+    ## Your Job: Two-Stage Security Review
+
+    ### Stage 1: Your Initial Review
+
+    Do your own security review first. Check the Security Checklist below.
+    Document any findings with severity (Critical/High/Medium).
+
+    ### Stage 2: PAL secaudit Deep Analysis
+
+    After your initial review, run PAL secaudit for deeper analysis:
+
+    ```
+    PAL secaudit (Opus 4.5):
+      Input:
+        - Code diff: [git diff output]
+        - Context: "Financial services app - M&A due diligence, email/OAuth integration"
+        - Your findings: [your initial findings from Stage 1]
+        - Request: "Deep security analysis - check for vulnerabilities I may have missed"
+
+      Output: Additional findings + validation of your findings
+    ```
+
+    Combine your findings with PAL secaudit's findings.
+
+    ### Stage 3: Handle Ambiguous Findings
+
+    If any finding is ambiguous (unclear if it's a real vulnerability):
+
+    ```
+    PAL thinkdeep (Opus 4.5):
+      Input:
+        - Finding: [the ambiguous finding]
+        - Code context: [relevant code]
+        - Question: "Is this actually exploitable? Consider input validation
+          elsewhere, attack surface, and real-world exploit scenarios."
+
+      Output: "Yes, real vulnerability" or "No, false positive" with reasoning
+    ```
+
+    ### Stage 4: Verify CRITICAL Issues
+
+    If you find any CRITICAL severity issues, verify with PAL consensus:
+
+    ```
+    PAL consensus (Gemini 3.0 Pro + GPT 5.2 + Opus 4.5):
+      Input:
+        - Finding: [the CRITICAL finding]
+        - Code: [relevant code snippet]
+        - Question: "Is this a CRITICAL security vulnerability that must block approval?"
+
+      Output:
+        - 3/3 agree CRITICAL → Confirmed CRITICAL, must fix
+        - 2/3 agree CRITICAL → Likely CRITICAL, must fix
+        - 1/3 or 0/3 agree → Reconsider severity, may be High or false positive
+    ```
+
+    **Only report CRITICAL issues that pass consensus verification.**
 
     ## Security Checklist
 
@@ -116,8 +179,8 @@ Task tool (general-purpose):
 
     ### Security Findings
 
-    #### Critical Issues
-    [Security vulnerabilities that MUST be fixed - blocks approval]
+    #### Critical Issues (Consensus Verified)
+    [Security vulnerabilities verified by PAL consensus - MUST be fixed]
 
     #### High Issues
     [Security concerns that SHOULD be fixed - blocks approval]
@@ -131,6 +194,13 @@ Task tool (general-purpose):
     - What's wrong (specific code snippet)
     - Attack scenario (how could this be exploited?)
     - How to fix
+    - Source: [Your review / PAL secaudit / Both]
+
+    ### PAL Tools Used
+
+    - PAL secaudit: [Yes/No] - [Summary of additional findings]
+    - PAL thinkdeep: [Yes/No] - [Which findings were clarified]
+    - PAL consensus: [Yes/No] - [Which CRITICAL issues were verified, vote results]
 
     ### Assessment
 
@@ -144,19 +214,20 @@ Task tool (general-purpose):
     ## Critical Rules
 
     **DO:**
+    - Run PAL secaudit on EVERY review (it catches what you miss)
+    - Use PAL thinkdeep for ANY ambiguous finding
+    - Use PAL consensus for ALL Critical findings before reporting
     - Read actual code, not just the report
     - Check ALL files in the diff
-    - Consider attack scenarios from external attackers
-    - Consider attack scenarios from malicious insiders
-    - Flag anything that handles authentication, authorization, or sensitive data
-    - Be thorough - missed security issues are costly
+    - Consider attack scenarios from external attackers AND malicious insiders
 
     **DON'T:**
+    - Skip PAL secaudit (it's your safety net)
+    - Report CRITICAL without consensus verification
     - Approve code with unreviewed sections
     - Assume input is safe because it "comes from our API"
     - Ignore issues because "it's just internal"
     - Mark Critical issues as Medium to avoid blocking
-    - Skip checking dependencies for vulnerabilities
 
     ## Financial Services Context
 
@@ -199,7 +270,7 @@ If skip is confirmed:
 ```
 ### Security Findings
 
-#### Critical Issues
+#### Critical Issues (Consensus Verified)
 
 1. **Hardcoded API Key**
    - File: src/email/client.ts:15
@@ -207,6 +278,8 @@ If skip is confirmed:
    - Code: `const API_KEY = "sk_live_abc123..."`
    - Attack: Anyone with code access can use this key
    - Fix: Move to environment variable, use secrets manager
+   - Source: Your review + PAL secaudit
+   - Consensus: 3/3 agree CRITICAL ✅
 
 2. **SQL Injection**
    - File: src/db/queries.ts:42
@@ -214,6 +287,8 @@ If skip is confirmed:
    - Code: `db.query(\`SELECT * FROM deals WHERE id = ${userId}\`)`
    - Attack: Attacker can read/modify any deal data
    - Fix: Use parameterized query: `db.query('SELECT * FROM deals WHERE id = $1', [userId])`
+   - Source: PAL secaudit
+   - Consensus: 3/3 agree CRITICAL ✅
 
 #### High Issues
 
@@ -223,6 +298,7 @@ If skip is confirmed:
    - Code: `app.get('/deal/:id', (req, res) => { ... })`
    - Attack: Any authenticated user can view any deal
    - Fix: Add check: `if (deal.ownerId !== req.user.id) return 403`
+   - Source: Your review
 
 #### Medium Issues
 
@@ -230,6 +306,13 @@ If skip is confirmed:
    - File: src/api/auth.ts:10
    - Type: Brute Force Risk
    - Recommendation: Add rate limiting to login endpoint
+   - Source: PAL secaudit
+
+### PAL Tools Used
+
+- PAL secaudit: Yes - Found SQL injection I missed, confirmed API key issue
+- PAL thinkdeep: No - No ambiguous findings
+- PAL consensus: Yes - Verified 2 CRITICAL issues (both 3/3 agreement)
 
 ### Assessment
 

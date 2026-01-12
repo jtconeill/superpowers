@@ -250,6 +250,54 @@ Done!
 - NOT recommended for: authentication, data handling, API endpoints, email/OAuth integration
 - See `./security-reviewer-prompt.md` for skip confirmation process
 
+## PAL MCP Integration
+
+Subagents are "boosted" with PAL MCP tools for enhanced capabilities. PAL calls happen inside subagents, keeping the main agent's context clean.
+
+### Model Assignments
+
+| Tool | Model | Used By | When |
+|------|-------|---------|------|
+| **debug** | Opus 4.5 | Implementer | After 2 failed test attempts |
+| **secaudit** | Opus 4.5 | Security Reviewer | Every security review |
+| **thinkdeep** | Opus 4.5 | Security Reviewer | Ambiguous findings |
+| **consensus** | Gemini 3.0 Pro + GPT 5.2 + Opus 4.5 | Security Reviewer | CRITICAL issue verification |
+| **codereview** | Sonnet 4.5 | Quality Reviewer | Every quality review |
+
+### How PAL Tools Are Used
+
+**Implementer Subagent:**
+```
+Tests fail → Attempt fix → Still fail → Attempt fix → Still fail → PAL debug (Opus 4.5)
+```
+
+**Security Reviewer Subagent:**
+```
+Your review → PAL secaudit (always) → Ambiguous? → PAL thinkdeep → CRITICAL? → PAL consensus
+```
+
+**Quality Reviewer Subagent:**
+```
+PAL codereview (always) → Combine with your observations → Report
+```
+
+### Benefits
+
+- **Fresh context:** PAL calls happen in subagent context, not main agent
+- **Multiple perspectives:** Different models catch different issues
+- **Verified CRITICALs:** 3-model consensus prevents false positives on blockers
+- **Deep analysis:** Specialized tools (secaudit, codereview) go deeper than general review
+
+### PAL Tool Triggers
+
+| Tool | Trigger | Efficiency |
+|------|---------|------------|
+| debug | After 2 failed fix attempts | ~10% of tasks |
+| secaudit | Every security review | 100% of tasks |
+| thinkdeep | Ambiguous security finding | ~5-10% of reviews |
+| consensus (CRITICAL) | Any CRITICAL finding | ~5-15% of reviews |
+| codereview | Every quality review | 100% of tasks |
+
 ## Integration
 
 **Required workflow skills:**

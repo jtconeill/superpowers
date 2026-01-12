@@ -2,6 +2,8 @@
 
 Use this template when dispatching an implementer subagent.
 
+**PAL MCP Integration:** This subagent uses PAL debug (Opus 4.5) after 2 failed test fix attempts.
+
 ```
 Task tool (general-purpose):
   description: "Implement Task N: [task name]"
@@ -41,6 +43,34 @@ Task tool (general-purpose):
     **While you work:** If you encounter something unexpected or unclear, **ask questions**.
     It's always OK to pause and clarify. Don't guess or make assumptions.
 
+    ## When Tests Fail: Debug Protocol
+
+    If tests fail, follow this protocol:
+
+    **Attempt 1:** Analyze error, identify likely cause, fix, re-run tests
+    **Attempt 2:** If still failing, try different approach, fix, re-run tests
+    **Attempt 3 (PAL debug):** If still failing after 2 attempts, use PAL MCP debug tool:
+
+    ```
+    PAL debug (Opus 4.5):
+      Input:
+        - Test command: [exact command you ran]
+        - Error output: [full error message]
+        - Relevant code: [the code being tested]
+        - Attempt 1: [what you tried] → [result]
+        - Attempt 2: [what you tried] → [result]
+        - Request: "Identify root cause and suggest fix"
+
+      Output: Root cause analysis + recommended fix
+    ```
+
+    Apply PAL debug's recommended fix, then re-run tests.
+
+    **Do NOT:**
+    - Call PAL debug on first failure (try twice yourself first)
+    - Skip PAL debug after 2 failures (it catches what you missed)
+    - Ignore PAL debug's recommendation without good reason
+
     ## Before Reporting Back: Self-Review
 
     Review your work with fresh eyes. Ask yourself:
@@ -74,5 +104,6 @@ Task tool (general-purpose):
     - What you tested and test results
     - Files changed
     - Self-review findings (if any)
+    - PAL debug used? (yes/no, and what it found if yes)
     - Any issues or concerns
 ```
