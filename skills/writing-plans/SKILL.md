@@ -17,6 +17,72 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 
+## PAL MCP Integration (Multi-Model Planning)
+
+For better plans, use PAL MCP to get a second perspective:
+
+### Step 1: Create Your Initial Plan
+
+Write your plan following the structure below.
+
+### Step 2: Get Gemini's Perspective
+
+Use PAL clink to get Gemini's alternative plan:
+
+```
+PAL clink (Gemini 2.5 Flash):
+  Input:
+    - Design document: [path to design.md]
+    - Your plan: [your initial plan]
+    - Request: "Review this implementation plan. Create your own alternative
+      plan if you see a better approach, or suggest improvements to this plan."
+
+  Output: Alternative plan OR improvements to your plan
+```
+
+### Step 3: Compare Plans (If Significantly Different)
+
+If Gemini's plan significantly differs from yours:
+
+```
+PAL thinkdeep (Opus 4.5):
+  Input:
+    - Plan A: [your plan]
+    - Plan B: [Gemini's plan]
+    - Question: "Compare these plans. What are the trade-offs?
+      Which approach is better for a financial services app
+      prioritizing security and maintainability?"
+
+  Output: Analysis of trade-offs + recommendation
+```
+
+### Step 4: Merge with Consensus
+
+Use PAL consensus to finalize:
+
+```
+PAL consensus (Gemini 2.5 Flash + GPT-4o + Sonnet 4.5):
+  Input:
+    - Plan A: [your plan]
+    - Plan B: [Gemini's plan / improvements]
+    - thinkdeep analysis: [if used]
+    - Question: "What should the final plan include? Identify
+      best ideas from each approach."
+
+  Output: Consensus on final plan structure
+```
+
+### When Plans "Significantly Differ"
+
+Plans significantly differ when:
+- Different architecture approach (e.g., one service vs multiple)
+- Different technology choices
+- 50%+ difference in number of tasks
+- One addresses concerns the other ignores
+- Different ordering that affects dependencies
+
+If plans mostly agree, skip thinkdeep and use consensus just to confirm.
+
 ## Bite-Sized Task Granularity
 
 **Each step is one action (2-5 minutes):**
